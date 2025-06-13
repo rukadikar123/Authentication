@@ -1,17 +1,28 @@
+import { uploadOnCloudinary } from "../config/cloudinary.js";
 import { generateJWTToken } from "../config/JWTgenerate.js";
 import User from "../Model/User.Schema.js";
 import bcrypt from 'bcryptjs'
 
 export const signUp=async(req,res)=>{
     try {
-        const {username, email,password}=req.body;
+        const {fullname,username, email,password}=req.body;
 
-        if(!username || !email || !password){
+        if(!fullname || !username || !email || !password){
             return res.status(400).json({
                 success:false,
                 message:"all fields required"
             })
         }
+
+        let profilepic;
+        console.log(req.file);
+        
+        
+        if (req.file){
+            profilepic= await uploadOnCloudinary(req.file.path)
+        }
+
+   
 
         const existUser=await User.findOne({email})
 
@@ -25,9 +36,11 @@ export const signUp=async(req,res)=>{
         const hashedPassword=await bcrypt.hash(password,8)
 
         const user=await User.create({
+            fullname,
             username,
             email,
-            password:hashedPassword
+            password:hashedPassword,
+            profilepic
         })
 
         const token=generateJWTToken(user._id)
